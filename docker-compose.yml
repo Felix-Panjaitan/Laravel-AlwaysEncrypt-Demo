@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # PHP Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+      - ./certs/PHPcert.pfx:/usr/local/share/certificates/PHPcert.pfx:ro
+    networks:
+      - laravel
+    environment:
+        - CERT_PASSWORD={{certificate_password}}  # Set your certificate password here
+
+  # Nginx Web Server Service
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: laravel_nginx
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    volumes:
+      - .:/var/www/html
+      - ./.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
