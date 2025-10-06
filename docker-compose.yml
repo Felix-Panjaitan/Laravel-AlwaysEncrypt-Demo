@@ -14,7 +14,10 @@ services:
     networks:
       - laravel
     environment:
-        - CERT_PASSWORD={{certificate_password}}  # Set your certificate password here
+      - CERT_PASSWORD=${CERT_PASSWORD}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
 
   # Nginx Web Server Service
   nginx:

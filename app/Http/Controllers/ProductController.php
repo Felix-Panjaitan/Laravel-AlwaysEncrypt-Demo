@@ -4,17 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::latest()->paginate(10);
+        $query = Product::query();
 
-        return view('products.index', compact('products'));
+        // Search by name (regular column)
+        if ($request->has('search_name') && !empty($request->search_name)) {
+            $query->where('name', 'like', '%' . $request->search_name . '%');
+        }
+
+        // Search by credit_card_number (deterministic encryption)
+        if ($request->has('search_cc') && !empty($request->search_cc)) {
+            $query->where('credit_card_number', $request->search_cc);
+        }
+
+        // Search by secret_notes (randomized encryption)
+        // This won't work but we'll include it to demonstrate
+        if ($request->has('search_notes') && !empty($request->search_notes)) {
+            $query->where('secret_notes', $request->search_notes);
+        }
+
+        $products = $query->paginate(10);
+
+        return view('products.index', compact('products'))
+            ->with('i', ($request->input('page', 1) - 1) * 10)
+            ->with('search_name', $request->search_name)
+            ->with('search_cc', $request->search_cc)
+            ->with('search_notes', $request->search_notes);
     }
 
     /**
@@ -40,15 +63,21 @@ class ProductController extends Controller
             'secret_notes' => 'nullable|string|max:255',
         ]);
 
-        Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'quantity' => $request->quantity,
-            'active' => $request->boolean('active'),
-            'credit_card_number' => $request->credit_card_number ? (string)$request->credit_card_number : null,
-            'secret_notes' => $request->secret_notes ? (string)$request->secret_notes : null,
-        ]);
+        DB::statement(
+            "INSERT INTO products (name, description, price, quantity, active, credit_card_number, secret_notes, created_at, updated_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $request->name,
+                $request->description,
+                $request->price,
+                $request->quantity,
+                $request->boolean('active') ? 1 : 0,
+                $request->credit_card_number,
+                $request->secret_notes,
+                now(),
+                now()
+            ]
+        );
 
         return redirect()->route('products.index')
             ->with('success', 'Product created successfully.');
@@ -85,7 +114,22 @@ class ProductController extends Controller
             'secret_notes' => 'nullable|string|max:255',
         ]);
 
-        $product->update($request->all());
+        DB::statement(
+            "UPDATE products SET name = ?, description = ?, price = ?,
+                  quantity = ?, active = ?, credit_card_number = ?, secret_notes = ?,
+                  updated_at = ? WHERE id = ?",
+            [
+                $request->name,
+                $request->description,
+                $request->price,
+                $request->quantity,
+                $request->boolean('active') ? 1 : 0,
+                $request->credit_card_number,
+                $request->secret_notes,
+                now(),
+                $product->id
+            ]
+        );
 
         return redirect()->route('products.index')
             ->with('success', 'Product updated successfully.');

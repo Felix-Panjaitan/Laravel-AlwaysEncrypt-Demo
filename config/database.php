@@ -3,7 +3,6 @@
 use Illuminate\Support\Str;
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Database Connection Name
@@ -16,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'sqlsrv'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,7 +29,6 @@ return [
     */
 
     'connections' => [
-
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DATABASE_URL'),
@@ -42,22 +40,32 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-
-            // SSL and encryption settings
-            'encrypt' => true,
-            'trust_server_certificate' => true, // Use true for self-signed certificates
-
-            // Always Encrypted with MSSQL Certificate Store
-            'column_encryption' => 'Enabled',
-            'key_store_provider' => 'MSSQL_CERTIFICATE_STORE',
-
-            // Remove any Azure Key Vault settings
-            // 'key_store_authentication' => '...',
-            // 'key_store_principal_id' => '...',
-            // 'key_store_secret' => '...',
-            // 'key_store_location' => '...',
+            'encrypt' => env('DB_ENCRYPT', true),
+            'trust_server_certificate' => env('DB_TRUST_SERVER_CERT', true),
+            'column_encryption' => env('DB_COLUMN_ENCRYPTION', 'Enabled'),
+            'key_store_provider' => env('DB_KEY_STORE_PROVIDER', 'MSSQL_CERTIFICATE_STORE'),
         ],
 
+        'sqlsrv_akv' => [
+            'driver' => 'sqlsrv',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', 'localhost'),
+            'port' => env('DB_PORT', '1433'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'encrypt' => env('DB_ENCRYPT', true),
+            'trust_server_certificate' => env('DB_TRUST_SERVER_CERT', true),
+            'column_encryption' => env('DB_COLUMN_ENCRYPTION', 'Enabled'),
+            'key_store_provider' => env('DB_AKV_KEY_STORE_PROVIDER', 'AZURE_KEY_VAULT'),
+            'key_store_authentication' => env('DB_AKV_AUTH', 'KeyVaultClientSecret'),
+            'key_store_principal_id' => env('AZURE_CLIENT_ID'),
+            'key_store_secret' => env('AZURE_CLIENT_SECRET'),
+            'key_store_location' => env('AZURE_KEY_VAULT_URL'),
+        ],
     ],
 
     /*
@@ -88,7 +96,6 @@ return [
     */
 
     'redis' => [
-
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
@@ -122,7 +129,5 @@ return [
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
             'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
-
     ],
-
 ];
